@@ -1,0 +1,61 @@
+---
+title: "Advent of Code 2022 - Day 1"
+output: github_document
+
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Import and Tag Data
+
+Load the data line by line as a character vector. Then convert to a data frame and add a row number column as a unique id for filtering later
+
+```{r load_data}
+input_data = readLines("input/input_1.txt")
+
+input_df = data.frame(calories = input_data) %>% 
+  mutate(row_number = row_number(), .before = 1)
+
+```
+
+## Identify the Groups
+
+The rows with blank calories indicate the start of a new group. We can coerce calories to numeric and use is.na to locate the blanks for some boolean math
+```{r flag_groups}
+
+grouped_df = input_df %>% 
+  mutate(
+    calories = as.numeric(calories),
+    is_blank = is.na(calories),
+    elf_number = cumsum(is_blank) + 1
+  ) 
+
+```
+
+## Summarize and Answer
+
+Now that the elves are numbered, we can summarize by elf number to find the total calories for each elf.
+
+Identifying the largest total calories and summing the top three is a simple max or sort-->slice-->sum.
+```{r summarize}
+total_calories = grouped_df %>% 
+  summarise(
+    .by = elf_number,
+    total_calories = sum(calories, na.rm = TRUE)
+  )
+
+most_calories = total_calories %>% 
+  pull(total_calories) %>% 
+  max(na.rm = TRUE)
+
+top_three_calories = total_calories %>% 
+  arrange(desc(total_calories)) %>% 
+  slice(1:3) %>% 
+  pull(total_calories) %>% 
+  sum()
+```

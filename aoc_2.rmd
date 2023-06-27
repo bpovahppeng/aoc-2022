@@ -1,0 +1,107 @@
+---
+title: "Advent of Code 2022 - Day 2"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load data
+
+```{r load_data}
+
+input_strategy = read_delim('input/input_2.txt', delim = ' ', col_names = c('opponent_throw', 'suggested_throw'))
+
+```
+
+## Define points values and scoring matrix
+
+```{r define_points}
+
+throw_decode = c(
+  'A' = 'rock',
+  'B' = 'paper',
+  'C' = 'scissors',
+  'X' = 'rock',
+  'Y' = 'paper',
+  'Z' = 'scissors'
+)
+
+points_values = data.frame(
+  throw = c('rock', 'paper', 'scissors'),
+  throw_points = c(1, 2, 3)
+)
+
+rps_matrix = matrix(
+  c(
+    3, 6, 0,
+    0, 3, 6,
+    6, 0, 3
+  ),
+  nrow = 3,
+  ncol = 3,
+  dimnames = list(c('rock', 'paper', 'scissors'), c('rock', 'paper', 'scissors'))
+)
+
+```
+
+## Decode the throws from letters to words
+
+```{r decode_throws}
+
+strategy_guide = input_strategy %>% 
+  mutate(
+    across(opponent_throw:suggested_throw, ~str_replace_all(.x, throw_decode))
+  )
+
+```
+
+## Score the rounds and answer
+
+```{r scoring}
+
+outcomes = strategy_guide  %>% 
+  left_join(points_values, by = c('suggested_throw' = 'throw')) %>%
+  rowwise() %>% 
+  mutate(
+    outcome_points = rps_matrix[suggested_throw, opponent_throw],
+    my_points = outcome_points + throw_points
+  )
+
+my_point_total = sum(outcomes$my_points)
+
+```
+
+## Part 2: Decrypt throw using suggested outcome
+
+Solve backwards for the suggested throw
+
+```{r decrypt}
+
+outcome_decode = c(
+  'X' = '0',
+  'Y' = '3',
+  'Z' = '6'
+)
+
+part_two_strategy_guide = input_strategy %>% 
+  mutate(
+    opponent_throw = str_replace_all(opponent_throw, throw_decode),
+    suggested_outcome = as.numeric(str_replace_all(suggested_throw, outcome_decode))
+  ) %>% 
+  select(-suggested_throw) %>% 
+  rowwise() %>% 
+  mutate(
+    required_throw = names(rps_matrix[,opponent_throw])[rps_matrix[,opponent_throw] == suggested_outcome]
+  ) %>% 
+  left_join(points_values, by = c('required_throw' = 'throw')) %>%
+  mutate(
+    my_points = throw_points + suggested_outcome
+  )
+
+part_two_point_total = sum(part_two_strategy_guide$my_points)
+```
+
