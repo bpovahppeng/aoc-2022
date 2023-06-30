@@ -1,11 +1,9 @@
---Read lines from input/input_3.txt as a table
-local raw_lines = {}
-for line in io.lines("input/input_3.txt") do
-  table.insert(raw_lines, line)
-end
+require('library')
+
+local raw_lines = read_txt("input/input_3.txt")
 
 --Define needed functions
-function getPriority(letter)
+function get_priority(letter)
   --find the letters ASCII value, do math to get the priority set by AoC
   local value = letter:byte()
   if value > 96 then
@@ -14,16 +12,6 @@ function getPriority(letter)
     priority = value - 38
   end
   return(priority)
-end
-
-function sum(table)
-  --lua doesn't have a built in method to sum the values in a table
-  --we have to implement one
-    local sum = 0
-    for i = 1, #table do
-        sum = sum + table[i]
-    end
-    return sum
 end
 
 --Part 1
@@ -35,6 +23,7 @@ local length = 0
 local num_packs = #raw_lines
 local temp_first = ""
 local temp_second = ""
+
 
 for pack = 1, num_packs do
   length = #raw_lines[pack]
@@ -56,7 +45,7 @@ for pack = 1, num_packs do
   for index = 1, #second[pack] do
     local current_letter = second[pack]:sub(index, index)
     if first_pouch:find(current_letter) then
-      table.insert(priorities, getPriority(current_letter))
+      table.insert(priorities, get_priority(current_letter))
       break
     end
   end 
@@ -80,7 +69,7 @@ for group = 1, num_groups do
   for index = 1, #pack_3 do
     local current_letter = pack_3:sub(index, index)
     if pack_1:find(current_letter) and pack_2:find(current_letter) then
-      table.insert(priorities_part_2, getPriority(current_letter))
+      table.insert(priorities_part_2, get_priority(current_letter))
       break
     end
   end
