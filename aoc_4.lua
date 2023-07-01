@@ -2,9 +2,17 @@ require('library')
 
 raw_input = read_txt('input/input_4.txt')
 
---print(raw_input[1])
+--[[
+Sample input:
+37-87,36-87
+3-98,3-84
+33-73,33-33
+3-65,1-3
+59-72,41-59
+]]--
 
 function split_in_two(text, pattern)
+  --splits a string in two parts, based on a regex pattern with two capture groups
   local split = {}
   
   for start, finish in string.gmatch(text, pattern) do
@@ -17,34 +25,20 @@ end
 
 
 function convert_pair_to_assignments(text)
+  --converts a string like '3-5,7-9' to a table like {'3-5', '7-9'}
   local assignments = split_in_two(text, '(%d+%-%d+),(%d+%-%d+)')
   
   return(assignments)
 end
 
+--convert the raw input to a table of assignments
 local input_assignments = {}
 for i = 1, #raw_input do
   table.insert(input_assignments, convert_pair_to_assignments(raw_input[i]))
 end
 
---print('first assignments', convert_pair_to_assignments(raw_input[1])[1], convert_pair_to_assignments(raw_input[1])[2])
-print('assignments', input_assignments[3][1], input_assignments[3][2])
-
-
---function convert_assignment_to_range(text)
-  
---  local assignment = split_in_two(text, '(%d+)%-(%d+)')
-
---  local range = {}
---  for i = assignment[1], assignment[2] do 
---    table.insert(range, i)
---  end
-  
---  return(range)
---end
-
 function convert_assignment_to_boolean(text)
-  
+  --converts a string like '3-5' to a boolean table like {false, false, true, true, true}
   local assignment = split_in_two(text, '(%d+)%-(%d+)')
 
   local boolean_table = {}
@@ -55,100 +49,51 @@ function convert_assignment_to_boolean(text)
   return(boolean_table)
 end
 
-
-
---function range_to_boolean(range)
---  local boolean_table = {}
---  for k, v in pairs(range) do
---    boolean_table[v] = true
---  end
-  
---  return(boolean_table)
---end
-print('length', #raw_input, #input_assignments)
-
-local input_booleans = {}
-for i = 1, #input_assignments do
---  boolean_1 = convert_assignment_to_boolean(input_assignments[i][1])
---  boolean_2 = convert_assignment_to_boolean(input_assignments[i][2])
-  input_booleans[i] = {}
-  input_booleans[i][1] = convert_assignment_to_boolean(input_assignments[i][1])
-  input_booleans[i][2] = convert_assignment_to_boolean(input_assignments[i][2])
-  
-  --table.insert(input_booleans, {convert_assignment_to_boolean(raw_input[i]))
-end
-
-print('length', #input_assignments, #input_booleans)
-
-function get_boolean_length(boolean)
-  local min = math.huge
-  local max = 0
-  
-  for k, v in pairs(boolean) do
-    if k < min then min = k end
-    max = k
+function get_min_max_index(table)
+  --get the lowest and largest index of a table
+  local min
+  local max
+  for k, v in pairs(table) do
+    min = math.min(min or k, k)
+    max = math.max(max or k, k)
   end
-  
-  return(max + 1 - min)
+  return({min, max})
 end
 
-function find_total_overlap(boolean_1, boolean_2)
+function ranges_overlap(range1, range2, complete_overlap)
+  --check if two ranges overlap
+  --if complete_overlap is true, one range must be represented completely in the other
+  --if complete_overlap is false, the ranges must overlap in at least one position
 
-  length_boolean_1 = get_boolean_length(boolean_1)
-  length_boolean_2 = get_boolean_length(boolean_2)
+  local range1_table = convert_assignment_to_boolean(range1)
+  local range2_table = convert_assignment_to_boolean(range2)
 
-  local num_matches = 0
+  local min_max_1 = get_min_max_index(range1_table)
+  local min_max_2 = get_min_max_index(range2_table)
   
-  for k, v in pairs(boolean_1) do
-    print(k, boolean_1[k], boolean_2[k])
-    if(boolean_1[k] and boolean_2[k]) then
-      --print('above matched')
-      num_matches = num_matches + 1
+  local overlap_count = 0
+  for i = math.min(min_max_1[1], min_max_1[2]), math.max(min_max_2[1], min_max_2[2]) do
+    if range1_table[i] and range2_table[i] then
+      overlap_count = overlap_count + 1
     end
   end
   
-  if num_matches == length_boolean_1 or num_matches == length_boolean_2 then
-    --print('the above set matched')
-    return(true)
+  if complete_overlap then
+    return overlap_count == math.min(min_max_1[2] - min_max_1[1] + 1, min_max_2[2] - min_max_2[1] + 1)
   end
-  --print('the above set didnt match')
-  return(false)
+  
+  return overlap_count > 0
 end
 
-local overlaps = {}
-local num_overlaps = 0
-for pair = 1, #input_booleans do
-  
-  local total_match = find_total_overlap(input_booleans[pair][1], input_booleans[pair][2])
-  
-  if total_match then num_overlaps = num_overlaps + 1 end
-  
-  table.insert(overlaps, total_match)
-  
-  --print(pair, total_match)
-  
---  local length_1 = #input_booleans[pair][1]
---  local length_2 = #input_booleans[pair][2]
-  
---  local num_matches = 0
-  
---  for k, v in pairs(input_booleans[pair][1]) do
---    if(input_booleans[pair][1][k] and input_booleans[pair][2][k]) then
---      num_matches = num_matches + 1
---    end
---  end
-  
---  if num_matches == length_1 or num_matches == length_2 then
---    num_total_overlaps = num_total_overlaps + 1
---  end
-  
+function count_overlaps(assignments, complete_overlap)
+  local overlaps = 0
+  for i = 1, #assignments do
+    if ranges_overlap(assignments[i][1], assignments[i][2], complete_overlap) then
+      overlaps = overlaps + 1
+    end
+  end
+  return(overlaps)
 end
 
-print_table(input_booleans[3][2])
-
-print(num_overlaps)
-
-find_total_overlap(input_booleans[5][1],input_booleans[5][2])
-
---why does it think that 5 matches?
-
+print('part 1 overlaps', count_overlaps(input_assignments, true))
+print('part 2 overlaps', count_overlaps(input_assignments, false))
