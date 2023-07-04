@@ -8,14 +8,25 @@ function read_txt(file_name)
   return(raw_lines)
 end
 
-function sum(table)
+function sum(input_table, field)
   --lua doesn't have a built in method to sum values in a table
   --we have to implement one
+  field = field or 'simple'
+  
+  if field == 'simple' then
     local sum = 0
-    for i = 1, #table do
-        sum = sum + table[i]
+    for i = 1, #input_table do
+        sum = sum + input_table[i]
     end
     return(sum)
+  else
+    local sum = 0
+    for k, v in pairs(input_table) do
+        sum = sum + v[field]
+    end
+    return(sum)
+  end
+  return(nil)
 end
 
 function print_table(table, start_index, end_index)
@@ -51,4 +62,17 @@ function string_to_character_table(text)
   return(character_table)
 end
 
-return({read_txt, sum, print_table, extract_all, string_to_character_table})
+function unique(input_table)
+  --probably a too simple implemenation of a unique function
+  local unique_table = {}
+  local bool_table = {} --this table exists to assign the values from input_table as keys... This way we only have to use one for loop
+  
+  for k, v in pairs(input_table) do
+    if bool_table[v] ~= true then table.insert(unique_table, v) end
+    bool_table[v] = true
+  end
+
+  return(unique_table)
+end
+
+return({read_txt, sum, print_table, extract_all, string_to_character_table, unique})
